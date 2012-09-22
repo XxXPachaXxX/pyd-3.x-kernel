@@ -952,7 +952,7 @@ int processor_name_read_proc(char *page, char **start, off_t off,
 {
 	char *p = page;
 
-	p += sprintf(p, "1.8 GHz dualcore");
+	p += sprintf(p, "Qualcomm MSM8660 Dual-Core");
 
 	return p - page;
 }

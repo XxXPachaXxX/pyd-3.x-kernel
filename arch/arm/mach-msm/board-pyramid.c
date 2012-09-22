@@ -67,6 +67,7 @@
 #include <mach/msm_spi.h>
 #include <mach/msm_serial_hs.h>
 #include <mach/msm_serial_hs_lite.h>
+#include <mach/bcm_bt_lpm.h>
 #include <mach/msm_iomap.h>
 #include <mach/msm_memtypes.h>
 #include <asm/mach/mmc.h>
@@ -1302,6 +1303,9 @@ static struct platform_device htc_battery_pdev = {
 };
 #endif
 
+/*
+ * =============== Camera related function (BEGIN) ===============
+ */
 static void config_gpio_table(uint32_t *table, int len)
 {
 	int n, rc;
@@ -1562,16 +1566,16 @@ static struct msm_camera_sensor_flash_src msm_flash_src = {
 	.camera_flash				= flashlight_control,
 };
 
-static struct msm_camera_sensor_flash_data flash_s5k3h1gx = {
-	.flash_type		= MSM_CAMERA_FLASH_LED,
-	.flash_src		= &msm_flash_src
-};
-
 static struct camera_flash_cfg msm_camera_sensor_flash_cfg = {
 	.low_temp_limit		= 5,
 	.low_cap_limit		= 10,
 };
 
+#ifdef CONFIG_S5K3H1GX
+static struct msm_camera_sensor_flash_data flash_s5k3h1gx = {
+	.flash_type		= MSM_CAMERA_FLASH_LED,
+	.flash_src		= &msm_flash_src
+};
 static struct msm_camera_sensor_info msm_camera_sensor_s5k3h1gx_data = {
 	.sensor_name	= "s5k3h1gx",
 	.sensor_reset	= 137,/*Main Cam RST*/
@@ -1599,6 +1603,41 @@ static struct platform_device msm_camera_sensor_s5k3h1gx = {
 		.platform_data = &msm_camera_sensor_s5k3h1gx_data,
 	},
 };
+#endif	/* CONFIG_S5K3H1GX*/
+
+#ifdef CONFIG_S5K3H2YX
+static struct msm_camera_sensor_flash_data flash_s5k3h2yx = {
+	.flash_type = MSM_CAMERA_FLASH_LED,
+	.flash_src		= &msm_flash_src
+};
+
+static struct msm_camera_sensor_info msm_camera_sensor_s5k3h2yx_data = {
+	.sensor_name	= "s5k3h2yx",
+	.sensor_reset = 137,/*Main Cam RST*/
+	.sensor_pwd = 137,/*139,*/ /*Main Cam PWD*/
+	.vcm_pwd = 58,/*VCM_PD*/
+	.vcm_enable = 0,
+	.camera_power_on = Pyramid_sensor_vreg_on,
+	.camera_power_off = Pyramid_sensor_vreg_off,
+	.camera_clk_switch = Pyramid_maincam_clk_switch,
+	.pdata = &msm_camera_device_data,
+	.resource = msm_camera_resources,
+	.num_resources = ARRAY_SIZE(msm_camera_resources),
+	.flash_data		= &flash_s5k3h2yx,
+	.flash_cfg = &msm_camera_sensor_flash_cfg,
+	.mirror_mode = 0,
+	.csi_if = 1,
+	.gpio_set_value_force = 1,/*use different method of gpio set value*/
+	.dev_node	= 0
+};
+
+static struct platform_device msm_camera_sensor_s5k3h2yx = {
+	.name	= "msm_camera_s5k3h2yx",
+	.dev	= {
+		.platform_data = &msm_camera_sensor_s5k3h2yx_data,
+	},
+};
+#endif	/* CONFIG_S5K3H2YX */
 
 static struct msm_camera_sensor_flash_data flash_mt9v113 = {
 	.flash_type		= MSM_CAMERA_FLASH_NONE,
@@ -1659,11 +1698,22 @@ static struct i2c_board_info msm_camera_boardinfo[] __initdata = {
 		I2C_BOARD_INFO("s5k3h1gx", 0x20 >> 1),
 	},
 	#endif
+	#ifdef CONFIG_S5K3H2YX
+	{
+		I2C_BOARD_INFO("s5k3h2yx", 0x20 >> 1),
+	},
+	#endif
 	{
 		I2C_BOARD_INFO("mt9v113", 0x3C),
 	},
 };
-#endif
+
+#endif	/* CONFIG_MSM_CAMERA */
+
+/*
+ * =============== Camera related function (END) ===============
+ */
+
 
 #ifdef CONFIG_MSM_GEMINI
 static struct resource msm_gemini_resources[] = {
@@ -1707,19 +1757,9 @@ static uint32_t gsbi4_gpio_table[] = {
 	GPIO_CFG(PYRAMID_CAM_I2C_SCL, 1, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
 };
 
-static uint32_t gsbi4_gpio_table_gpio[] = {
-	GPIO_CFG(PYRAMID_CAM_I2C_SDA, 0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
-	GPIO_CFG(PYRAMID_CAM_I2C_SCL, 0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
-};
-
 static uint32_t gsbi5_gpio_table[] = {
 	GPIO_CFG(PYRAMID_TP_I2C_SDA, 1, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_4MA),
 	GPIO_CFG(PYRAMID_TP_I2C_SCL, 1, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
-};
-
-static uint32_t gsbi5_gpio_table_gpio[] = {
-	GPIO_CFG(PYRAMID_TP_I2C_SDA, 0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
-	GPIO_CFG(PYRAMID_TP_I2C_SCL, 0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
 };
 
 static uint32_t gsbi7_gpio_table[] = {
@@ -1727,19 +1767,9 @@ static uint32_t gsbi7_gpio_table[] = {
 	GPIO_CFG(PYRAMID_GENERAL_I2C_SCL, 1, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
 };
 
-static uint32_t gsbi7_gpio_table_gpio[] = {
-	GPIO_CFG(PYRAMID_GENERAL_I2C_SDA, 0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
-	GPIO_CFG(PYRAMID_GENERAL_I2C_SCL, 0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
-};
-
 static uint32_t gsbi10_gpio_table[] = {
 	GPIO_CFG(PYRAMID_SENSOR_I2C_SDA, 1, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_4MA),
 	GPIO_CFG(PYRAMID_SENSOR_I2C_SCL, 1, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
-};
-
-static uint32_t gsbi10_gpio_table_gpio[] = {
-	GPIO_CFG(PYRAMID_SENSOR_I2C_SDA, 0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
-	GPIO_CFG(PYRAMID_SENSOR_I2C_SCL, 0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
 };
 
 
@@ -1753,8 +1783,8 @@ static void gsbi_qup_i2c_gpio_config(int adap_id, int config_type)
 	}
 
 	if ((adap_id == MSM_GSBI4_QUP_I2C_BUS_ID) && (config_type == 0)) {
-		gpio_tlmm_config(gsbi4_gpio_table_gpio[0], GPIO_CFG_ENABLE);
-		gpio_tlmm_config(gsbi4_gpio_table_gpio[1], GPIO_CFG_ENABLE);
+		gpio_tlmm_config(gsbi4_gpio_table[0], GPIO_CFG_DISABLE);
+		gpio_tlmm_config(gsbi4_gpio_table[1], GPIO_CFG_DISABLE);
 	}
 
 	if ((adap_id == MSM_GSBI5_QUP_I2C_BUS_ID) && (config_type == 1)) {
@@ -1763,8 +1793,8 @@ static void gsbi_qup_i2c_gpio_config(int adap_id, int config_type)
 	}
 
 	if ((adap_id == MSM_GSBI5_QUP_I2C_BUS_ID) && (config_type == 0)) {
-		gpio_tlmm_config(gsbi5_gpio_table_gpio[0], GPIO_CFG_ENABLE);
-		gpio_tlmm_config(gsbi5_gpio_table_gpio[1], GPIO_CFG_ENABLE);
+		gpio_tlmm_config(gsbi5_gpio_table[0], GPIO_CFG_DISABLE);
+		gpio_tlmm_config(gsbi5_gpio_table[1], GPIO_CFG_DISABLE);
 	}
 
 	if ((adap_id == MSM_GSBI7_QUP_I2C_BUS_ID) && (config_type == 1)) {
@@ -1773,8 +1803,8 @@ static void gsbi_qup_i2c_gpio_config(int adap_id, int config_type)
 	}
 
 	if ((adap_id == MSM_GSBI7_QUP_I2C_BUS_ID) && (config_type == 0)) {
-		gpio_tlmm_config(gsbi7_gpio_table_gpio[0], GPIO_CFG_ENABLE);
-		gpio_tlmm_config(gsbi7_gpio_table_gpio[1], GPIO_CFG_ENABLE);
+		gpio_tlmm_config(gsbi7_gpio_table[0], GPIO_CFG_DISABLE);
+		gpio_tlmm_config(gsbi7_gpio_table[1], GPIO_CFG_DISABLE);
 	}
 
 	if ((adap_id == MSM_GSBI10_QUP_I2C_BUS_ID) && (config_type == 1)) {
@@ -1783,8 +1813,8 @@ static void gsbi_qup_i2c_gpio_config(int adap_id, int config_type)
 	}
 
 	if ((adap_id == MSM_GSBI10_QUP_I2C_BUS_ID) && (config_type == 0)) {
-		gpio_tlmm_config(gsbi10_gpio_table_gpio[0], GPIO_CFG_ENABLE);
-		gpio_tlmm_config(gsbi10_gpio_table_gpio[1], GPIO_CFG_ENABLE);
+		gpio_tlmm_config(gsbi10_gpio_table[0], GPIO_CFG_DISABLE);
+		gpio_tlmm_config(gsbi10_gpio_table[1], GPIO_CFG_DISABLE);
 	}
 
 }
@@ -2275,14 +2305,52 @@ static struct attribute_group pyramid_properties_attr_group = {
 
 #define TS_PEN_IRQ_GPIO 61
 #ifdef CONFIG_SERIAL_MSM_HS
-static struct msm_serial_hs_platform_data msm_uart_dm1_pdata = {
-	.inject_rx_on_wakeup = 0,
-	.cpu_lock_supported = 1,
+static int configure_uart_gpios(int on)
+{
+	int ret = 0, i;
+	int uart_gpios[] = {
+		PYRAMID_GPIO_BT_UART1_TX,
+		PYRAMID_GPIO_BT_UART1_RX,
+		PYRAMID_GPIO_BT_UART1_CTS,
+		PYRAMID_GPIO_BT_UART1_RTS,
+	};
+	for (i = 0; i < ARRAY_SIZE(uart_gpios); i++) {
+		if (on) {
+			ret = msm_gpiomux_get(uart_gpios[i]);
+			if (unlikely(ret))
+				break;
+		} else {
+			ret = msm_gpiomux_put(uart_gpios[i]);
+			if (unlikely(ret))
+				return ret;
+		}
+	}
+	if (ret)
+		for (; i >= 0; i--)
+			msm_gpiomux_put(uart_gpios[i]);
+	return ret;
+}
 
-	/* for brcm BT */
-	.bt_wakeup_pin_supported = 1,
-	.bt_wakeup_pin = PYRAMID_GPIO_BT_CHIP_WAKE,
-	.host_wakeup_pin = PYRAMID_GPIO_BT_HOST_WAKE,
+static struct msm_serial_hs_platform_data msm_uart_dm1_pdata = {
+	.wakeup_irq = -1,
+	.inject_rx_on_wakeup = 0,
+	.gpio_config = configure_uart_gpios,
+	.exit_lpm_cb = bcm_bt_lpm_exit_lpm_locked,
+};
+
+static struct bcm_bt_lpm_platform_data bcm_bt_lpm_pdata = {
+	.gpio_wake = PYRAMID_GPIO_BT_CHIP_WAKE,
+	.gpio_host_wake = PYRAMID_GPIO_BT_HOST_WAKE,
+	.request_clock_off_locked = msm_hs_request_clock_off_locked,
+	.request_clock_on_locked = msm_hs_request_clock_on_locked,
+};
+
+struct platform_device pyramid_bcm_bt_lpm_device = {
+	.name = "bcm_bt_lpm",
+	.id = 0,
+	.dev = {
+		.platform_data = &bcm_bt_lpm_pdata,
+	},
 };
 #endif
 
@@ -3084,7 +3152,7 @@ static struct pm8058_led_config pm_led_config[] = {
 		.name = "button-backlight",
 		.type = PM8058_LED_DRVX,
 		.bank = 6,
-		.flags = PM8058_LED_LTU_EN,
+		.flags = PM8058_LED_LTU_EN | PM8058_LED_DYNAMIC_BRIGHTNESS_EN,
 		.period_us = USEC_PER_SEC / 1000,
 		.start_index = 0,
 		.duites_size = 8,
@@ -3294,6 +3362,7 @@ static struct platform_device *pyramid_devices[] __initdata = {
 #endif
 #ifdef CONFIG_SERIAL_MSM_HS
 	&msm_device_uart_dm1,
+	&pyramid_bcm_bt_lpm_device,
 #endif
 #ifdef CONFIG_MSM_SSBI
 	&msm_device_ssbi_pmic1,
@@ -3336,6 +3405,9 @@ static struct platform_device *pyramid_devices[] __initdata = {
 #ifdef CONFIG_MSM_CAMERA
 #ifdef CONFIG_S5K3H1GX
 	&msm_camera_sensor_s5k3h1gx,
+#endif
+#ifdef CONFIG_S5K3H2YX
+	&msm_camera_sensor_s5k3h2yx,
 #endif
 	&msm_camera_sensor_webcam,
 
@@ -4865,8 +4937,6 @@ static void __init msm8x60_init_buses(void)
 #endif
 
 #ifdef CONFIG_SERIAL_MSM_HS
-	msm_uart_dm1_pdata.rx_wakeup_irq = gpio_to_irq(PYRAMID_GPIO_BT_HOST_WAKE);
-	msm_device_uart_dm1.name = "msm_serial_hs_brcm"; /* for brcm BT */
 	msm_device_uart_dm1.dev.platform_data = &msm_uart_dm1_pdata;
 #endif
 
