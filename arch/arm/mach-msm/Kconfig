@@ -271,7 +271,7 @@ config PERFLOCK_SCREEN_OFF_MIN
 config PERFLOCK_SCREEN_OFF_MAX
         depends on PERFLOCK_SCREEN_POLICY
         int "Maximum speed while screen off"
-        default MSM_CPU_FREQ_ONDEMAND_MIN
+        default MSM_CPU_FREQ_ONDEMAND_MAX
 
 menu "MSM Board Selection"
 
@@ -1494,6 +1494,27 @@ config MSM_DALRPC_TEST
 	help
 	  Exercises DAL RPC calls to QDSP6.
 
+config CPU_VOLTAGE_TABLE
+	bool "Enable CPU Voltage Table via sysfs for adjustements"
+	default n
+
+config CMDLINE_OPTIONS
+	bool "Enable cmdline khz/gov/maxscroff command parsing"
+	default n
+	help
+	  This enables the parsing of maxkhz=<VALUEinKHZ>,
+	  minkhz=<VALUEinKHZ>, governor=<GOVERNOR.NAME> and
+	  maxscroff=<VALUEinKHZ> commands from the kernels cmdline.
+	  This also enables a freq. cap while the screen is off.
+
+config CMDLINE_GPU_OPTIONS
+	bool "Enable cmdline GPU control."
+	default n
+	help
+	  This enables the CMDLine interface on GPU configuration,
+	  with 2-step 3D GPU Freq. control and a single freq. up to
+	  266mhz for the 2D GPU Clock.
+
 if CPU_FREQ_MSM
 
 config MSM_CPU_FREQ_SET_MIN_MAX
@@ -1514,14 +1535,6 @@ config MSM_CPU_FREQ_MIN
 	default 245760
 
 endif # CPU_FREQ_MSM
-
-config MSM_CPU_FREQ_ONDEMAND_MAX
-        int "Max"
-        default 384000
-
-config MSM_CPU_FREQ_ONDEMAND_MIN
-        int "Min"
-        default 245760
 
 config MSM_CPU_AVS
 	bool "Enable software controlled Adaptive Voltage Scaling (AVS)"
