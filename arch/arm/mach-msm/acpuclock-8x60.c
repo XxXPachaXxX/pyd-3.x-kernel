@@ -923,17 +923,9 @@ int processor_name_read_proc(char *page, char **start, off_t off,
 			   int count, int *eof, void *data)
 {
 	char *p = page;
-#ifdef CONFIG_CMDLINE_OPTIONS
-	if (cmdline_maxkhz) {
-		p += sprintf(p, "%u", (cmdline_maxkhz/1000));
-		p += sprintf(p, "MHz x2 - Bricked");
-	} else {
-#endif
-		p += sprintf(p, "%u", (CONFIG_MSM_CPU_FREQ_MAX/1000));
-		p += sprintf(p, "MHz x2 - Bricked");
-#ifdef CONFIG_CMDLINE_OPTIONS
-	}
-#endif
+
+	p += sprintf(p, "2Ghz Qualcomm Snapdragon S3");
+
 	return p - page;
 }
 
