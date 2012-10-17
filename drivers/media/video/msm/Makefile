@@ -1,4 +1,19 @@
 GCC_VERSION      := $(shell $(CONFIG_SHELL) $(PWD)/scripts/gcc-version.sh $(CROSS_COMPILE)gcc)
+
+ifdef CONFIG_CC_OPTIMIZE_ALOT
+CFLAGS_s5k3h1gx.o += -O2
+endif
+ifdef CONFIG_CC_OPTIMIZE_FAST
+CFLAGS_s5k3h1gx.o += -O2
+endif
+
+ifdef CONFIG_CC_OPTIMIZE_ALOT
+CFLAGS_mt9v113.o += -O2
+endif
+ifdef CONFIG_CC_OPTIMIZE_FAST
+CFLAGS_mt9v113.o += -O2
+endif
+
 ifeq ($(GCC_VERSION),0404)
 CFLAGS_REMOVE_msm_vfe8x.o = -Wframe-larger-than=1024
 endif
